@@ -6,6 +6,7 @@ import { useColorScheme } from 'react-native';
 import { store } from '@/store/store';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { initializeLocalDatabase } from '@/database/localDatabase';
+import { loadFinance } from '@/features/accounts/financeSlice';
 import { loadCurrentProfile, restoreAuthSession } from '@/features/authentication/authSlice';
 import { darkTheme, lightTheme } from '@/theme/theme';
 
@@ -37,6 +38,11 @@ function AuthBootstrapper() {
 
   useEffect(() => {
     dispatch(restoreAuthSession());
+    initializeLocalDatabase()
+      .then(() => dispatch(loadFinance()))
+      .catch((error: unknown) => {
+        console.error('Failed to load local finance data', error);
+      });
   }, [dispatch]);
 
   useEffect(() => {

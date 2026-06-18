@@ -2,9 +2,9 @@ spring:
   application:
     name: pennycheck-backend
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/pennycheck}
-    username: ${SPRING_DATASOURCE_USERNAME:pennycheck}
-    password: ${SPRING_DATASOURCE_PASSWORD:pennycheck}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/postgres}
+    username: ${SPRING_DATASOURCE_USERNAME:anjali21i}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
   flyway:
     enabled: true
     baseline-on-migrate: true
