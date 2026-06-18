@@ -5,8 +5,9 @@ import { Screen } from '@/components/Screen';
 import { createImportedLocalTransactions } from '@/features/accounts/localFinanceRepository';
 import { loadFinance } from '@/features/accounts/financeSlice';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { pickStatementFile } from '@/services/statementFileReader';
 import { formatMinorAmount } from '@/utils/money';
-import { ImportPreviewItem, previewCsvImport } from './importCsv';
+import { ImportPreviewItem, previewStatementImport } from './importCsv';
 
 const sampleCsv = `Date,Narration,Debit,Credit,Reference
 12/06/2026,UPI-SWIGGY-123456,650.00,,UTR1234567890
@@ -15,21 +16,52 @@ const sampleCsv = `Date,Narration,Debit,Credit,Reference
 export function ImportPanel() {
   const dispatch = useAppDispatch();
   const { accounts, categories } = useAppSelector((state) => state.finance);
-  const [csv, setCsv] = useState(sampleCsv);
+  const accessToken = useAppSelector((state) => state.auth.accessToken);
+  const [statementContent, setStatementContent] = useState(sampleCsv);
+  const [fileName, setFileName] = useState<string | null>(null);
   const [preview, setPreview] = useState<ImportPreviewItem[]>([]);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [message, setMessage] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const account = accounts[0];
+
+  const onPickFile = async () => {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const picked = await pickStatementFile(accessToken);
+      if (!picked) {
+        return;
+      }
+      setStatementContent(picked.content);
+      setFileName(picked.fileName);
+      setPreview([]);
+      setSelected({});
+      setMessage(`${picked.fileName} loaded`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to read statement file');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const onPreview = async () => {
     if (!account) {
       setMessage('Create an account before importing.');
       return;
     }
-    const rows = await previewCsvImport({ csv, account, categories });
-    setPreview(rows);
-    setSelected(Object.fromEntries(rows.map((row) => [row.id, row.valid && !row.duplicate])));
-    setMessage(`${rows.length} rows parsed`);
+    setBusy(true);
+    setMessage(null);
+    try {
+      const rows = await previewStatementImport({ content: statementContent, account, categories });
+      setPreview(rows);
+      setSelected(Object.fromEntries(rows.map((row) => [row.id, row.valid && !row.duplicate])));
+      setMessage(`${rows.length} rows parsed${fileName ? ` from ${fileName}` : ''}`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to preview statement');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const onConfirm = async () => {
@@ -54,18 +86,27 @@ export function ImportPanel() {
   return (
     <>
       <Text variant="headlineSmall">Import statement</Text>
-      <Text variant="bodyMedium">CSV preview supports Date, Narration, Debit, Credit and Reference columns.</Text>
+      <Text variant="bodyMedium">Import CSV, TXT, or text-based PDF statements, then confirm only the rows you want.</Text>
       <Card mode="contained">
         <Card.Content style={styles.form}>
+          <View style={styles.fileActions}>
+            <Button mode="outlined" onPress={onPickFile} loading={busy} disabled={busy}>
+              Choose file
+            </Button>
+            {fileName ? <Text style={styles.fileName}>{fileName}</Text> : null}
+          </View>
           <TextInput
-            label="CSV statement"
-            value={csv}
-            onChangeText={setCsv}
+            label="Statement content"
+            value={statementContent}
+            onChangeText={(value) => {
+              setStatementContent(value);
+              setFileName(null);
+            }}
             multiline
             numberOfLines={8}
-            accessibilityLabel="CSV statement content"
+            accessibilityLabel="Statement content"
           />
-          <Button mode="contained" onPress={onPreview}>
+          <Button mode="contained" onPress={onPreview} loading={busy} disabled={busy}>
             Preview
           </Button>
           {message ? <Text>{message}</Text> : null}
@@ -112,6 +153,14 @@ export function ImportScreen() {
 const styles = StyleSheet.create({
   form: {
     gap: 12,
+  },
+  fileActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  fileName: {
+    flex: 1,
   },
   previewRow: {
     flexDirection: 'row',

@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import { ApiEnvelope, ApiError } from '@/types/api';
 
-const apiBaseUrl =
+export const apiBaseUrl =
   Constants.expoConfig?.extra?.apiBaseUrl ?? process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8080/api/v1';
 
 function createCorrelationId() {
@@ -22,6 +22,26 @@ export async function apiPost<T>(path: string, body?: unknown, accessToken?: str
 
 export async function apiDelete<T>(path: string, accessToken?: string): Promise<T> {
   return apiRequest<T>(path, { method: 'DELETE', accessToken });
+}
+
+export async function apiPostForm<T>(path: string, formData: FormData, accessToken?: string): Promise<T> {
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'X-Correlation-ID': createCorrelationId(),
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = (await response.json().catch(() => null)) as ApiError | null;
+    throw new Error(error?.message ?? `API request failed with status ${response.status}`);
+  }
+
+  const envelope = (await response.json()) as ApiEnvelope<T>;
+  return envelope.data;
 }
 
 async function apiRequest<T>(
