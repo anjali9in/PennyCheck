@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: pennycheck-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-pennycheck}
+      POSTGRES_USER: ${POSTGRES_USER:-pennycheck}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pennycheck}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pennycheck-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pennycheck} -d ${POSTGRES_DB:-pennycheck}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: pennycheck-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-pennycheck}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-pennycheck}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-pennycheck}
+      JWT_ISSUER: ${JWT_ISSUER:-pennycheck-local}
+      JWT_SECRET: ${JWT_SECRET:-replace-with-a-strong-development-secret}
+    ports:
+      - "8080:8080"
+
+volumes:
+  pennycheck-postgres-data:
