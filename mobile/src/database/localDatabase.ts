@@ -89,6 +89,92 @@ export async function initializeLocalDatabase() {
 
     CREATE INDEX IF NOT EXISTS idx_transactions_account_date ON transactions(account_id, occurred_at DESC);
     CREATE INDEX IF NOT EXISTS idx_transactions_transfer_group ON transactions(transfer_group_id);
+
+    CREATE TABLE IF NOT EXISTS budgets (
+      id TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      category_id TEXT NOT NULL,
+      amount_minor TEXT NOT NULL,
+      currency TEXT NOT NULL,
+      period_type TEXT NOT NULL,
+      start_date TEXT NOT NULL,
+      end_date TEXT,
+      alert_threshold_percent REAL NOT NULL DEFAULT 80,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      deleted_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS recurring_transactions (
+      id TEXT PRIMARY KEY NOT NULL,
+      account_id TEXT NOT NULL,
+      category_id TEXT,
+      name TEXT NOT NULL,
+      amount_minor TEXT NOT NULL,
+      currency TEXT NOT NULL,
+      frequency TEXT NOT NULL,
+      next_occurrence_at TEXT NOT NULL,
+      paused INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      deleted_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS local_notifications (
+      id TEXT PRIMARY KEY NOT NULL,
+      type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      scheduled_at TEXT,
+      read_at TEXT,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      deleted_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS goals (
+      id TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      target_amount_minor TEXT NOT NULL,
+      current_amount_minor TEXT NOT NULL DEFAULT '0',
+      currency TEXT NOT NULL,
+      target_date TEXT,
+      linked_account_id TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      deleted_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS loans (
+      id TEXT PRIMARY KEY NOT NULL,
+      account_id TEXT,
+      name TEXT NOT NULL,
+      principal_minor TEXT NOT NULL,
+      outstanding_principal_minor TEXT NOT NULL,
+      annual_interest_rate REAL NOT NULL,
+      tenure_months INTEGER NOT NULL,
+      emi_amount_minor TEXT NOT NULL,
+      start_date TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      deleted_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS investments (
+      id TEXT PRIMARY KEY NOT NULL,
+      linked_account_id TEXT,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,
+      invested_amount_minor TEXT NOT NULL,
+      current_value_minor TEXT NOT NULL,
+      currency TEXT NOT NULL,
+      last_valuation_date TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      deleted_at TEXT
+    );
   `);
 
   await ensureColumn(database, 'transactions', 'reference_number', 'TEXT');

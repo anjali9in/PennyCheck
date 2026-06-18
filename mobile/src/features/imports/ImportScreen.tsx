@@ -12,7 +12,7 @@ const sampleCsv = `Date,Narration,Debit,Credit,Reference
 12/06/2026,UPI-SWIGGY-123456,650.00,,UTR1234567890
 13/06/2026,SALARY CREDIT,,90000.00,NEFT99887766`;
 
-export function ImportScreen() {
+export function ImportPanel() {
   const dispatch = useAppDispatch();
   const { accounts, categories } = useAppSelector((state) => state.finance);
   const [csv, setCsv] = useState(sampleCsv);
@@ -52,7 +52,7 @@ export function ImportScreen() {
   };
 
   return (
-    <Screen>
+    <>
       <Text variant="headlineSmall">Import statement</Text>
       <Text variant="bodyMedium">CSV preview supports Date, Narration, Debit, Credit and Reference columns.</Text>
       <Card mode="contained">
@@ -97,6 +97,14 @@ export function ImportScreen() {
           Import selected
         </Button>
       ) : null}
+    </>
+  );
+}
+
+export function ImportScreen() {
+  return (
+    <Screen>
+      <ImportPanel />
     </Screen>
   );
 }

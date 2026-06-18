@@ -1,8 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { AccountsScreen } from '@/features/accounts/AccountsScreen';
 import { DashboardScreen } from '@/features/dashboard/DashboardScreen';
-import { ImportScreen } from '@/features/imports/ImportScreen';
+import { BudgetsScreen } from '@/features/budgets/BudgetsScreen';
+import { MoreScreen } from '@/features/reports/MoreScreen';
 import { AddMoneyScreen } from '@/features/transactions/AddMoneyScreen';
 import { TransactionsScreen } from '@/features/transactions/TransactionsScreen';
 import { MainTabParamList } from './types';
@@ -14,7 +14,7 @@ const iconByRoute: Record<keyof MainTabParamList, keyof typeof MaterialCommunity
   Transactions: 'swap-horizontal',
   Add: 'plus-circle-outline',
   Budgets: 'chart-donut',
-  More: 'file-upload-outline',
+  More: 'chart-box-outline',
 };
 
 export function MainTabs() {
@@ -31,8 +31,8 @@ export function MainTabs() {
       <Tab.Screen name="Home" component={DashboardScreen} />
       <Tab.Screen name="Transactions" component={TransactionsScreen} />
       <Tab.Screen name="Add" component={AddMoneyScreen} />
-      <Tab.Screen name="Budgets" component={AccountsScreen} />
-      <Tab.Screen name="More" component={ImportScreen} />
+      <Tab.Screen name="Budgets" component={BudgetsScreen} />
+      <Tab.Screen name="More" component={MoreScreen} />
     </Tab.Navigator>
   );
 }
