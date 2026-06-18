@@ -13,7 +13,7 @@ public class SystemController {
     ApiResponse<Map<String, String>> status() {
         return ApiResponse.ok(Map.of(
                 "application", "PennyCheck",
-                "phase", "1",
+                "phase", "1-9",
                 "status", "ready"
         ));
     }

@@ -1,10 +1,10 @@
 /// <reference types="jest" />
 /* eslint-disable import/first */
 
-jest.mock('expo-secure-store', () => ({
-  getItemAsync: jest.fn(),
-  setItemAsync: jest.fn(),
-  deleteItemAsync: jest.fn(),
+jest.mock('@/services/secureStorage', () => ({
+  getSecureItem: jest.fn(),
+  setSecureItem: jest.fn(),
+  deleteSecureItem: jest.fn(),
 }));
 
 jest.mock('./authApi', () => ({

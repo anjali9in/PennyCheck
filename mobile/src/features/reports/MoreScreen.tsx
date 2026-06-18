@@ -4,7 +4,11 @@ import { Button, Card, ProgressBar, Text, TextInput } from 'react-native-paper';
 import { Screen } from '@/components/Screen';
 import { addGoal, addInvestment, addLoan, loadFinance } from '@/features/accounts/financeSlice';
 import { ImportPanel } from '@/features/imports/ImportScreen';
+import { setAppPin } from '@/services/appLockService';
+import { shareTextFile } from '@/services/exportSharing';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { lockApp, setAppLockEnabled } from '@/store/slices/appSlice';
+import { defaultHitSlop, formFieldLabel, minimumTouchTarget } from '@/utils/accessibility';
 import { formatMinorAmount } from '@/utils/money';
 import { buildTransactionsCsv, calculateCashflowMinor, calculateNetWorthMinor } from './reportsMath';
 
@@ -19,6 +23,7 @@ export function MoreScreen() {
     status,
     error,
   } = useAppSelector((state) => state.finance);
+  const appLockEnabled = useAppSelector((state) => state.app.appLockEnabled);
   const [goalName, setGoalName] = useState('Emergency fund');
   const [goalTarget, setGoalTarget] = useState('100000');
   const [goalCurrent, setGoalCurrent] = useState('0');
@@ -29,6 +34,8 @@ export function MoreScreen() {
   const [investmentName, setInvestmentName] = useState('Portfolio');
   const [investmentCost, setInvestmentCost] = useState('50000');
   const [investmentValue, setInvestmentValue] = useState('55000');
+  const [pin, setPin] = useState('');
+  const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
 
   const currency = accounts[0]?.currency ?? 'INR';
   const creditCards = accounts.filter((account) => account.type === 'CREDIT_CARD');
@@ -59,6 +66,20 @@ export function MoreScreen() {
     dispatch(loadFinance());
   };
 
+  const shareCsv = async () => {
+    await shareTextFile({
+      fileName: 'pennycheck-transactions.csv',
+      mimeType: 'text/csv',
+      content: csvExport,
+    });
+  };
+
+  const savePin = async () => {
+    await setAppPin(pin);
+    setPin('');
+    setSettingsMessage('PIN updated');
+  };
+
   return (
     <Screen>
       <Text variant="headlineSmall">Reports</Text>
@@ -82,12 +103,31 @@ export function MoreScreen() {
       <Text variant="headlineSmall">Goals</Text>
       <Card mode="contained">
         <Card.Content style={styles.form}>
-          <TextInput label="Goal name" value={goalName} onChangeText={setGoalName} />
+          <TextInput
+            label="Goal name"
+            value={goalName}
+            onChangeText={setGoalName}
+            accessibilityLabel={formFieldLabel('Goal name', true)}
+          />
           <View style={styles.inputRow}>
-            <TextInput style={styles.input} label="Target" value={goalTarget} onChangeText={setGoalTarget} keyboardType="decimal-pad" />
-            <TextInput style={styles.input} label="Saved" value={goalCurrent} onChangeText={setGoalCurrent} keyboardType="decimal-pad" />
+            <TextInput
+              style={styles.input}
+              label="Target"
+              value={goalTarget}
+              onChangeText={setGoalTarget}
+              keyboardType="decimal-pad"
+              accessibilityLabel={formFieldLabel('Goal target amount', true)}
+            />
+            <TextInput
+              style={styles.input}
+              label="Saved"
+              value={goalCurrent}
+              onChangeText={setGoalCurrent}
+              keyboardType="decimal-pad"
+              accessibilityLabel="Goal saved amount"
+            />
           </View>
-          <Button mode="contained" onPress={saveGoal} disabled={status === 'saving'}>
+          <Button mode="contained" onPress={saveGoal} disabled={status === 'saving'} hitSlop={defaultHitSlop} accessibilityHint="Creates a local savings goal">
             Add goal
           </Button>
         </Card.Content>
@@ -111,13 +151,38 @@ export function MoreScreen() {
       <Text variant="headlineSmall">Loans</Text>
       <Card mode="contained">
         <Card.Content style={styles.form}>
-          <TextInput label="Loan name" value={loanName} onChangeText={setLoanName} />
-          <TextInput label="Principal" value={loanPrincipal} onChangeText={setLoanPrincipal} keyboardType="decimal-pad" />
+          <TextInput
+            label="Loan name"
+            value={loanName}
+            onChangeText={setLoanName}
+            accessibilityLabel={formFieldLabel('Loan name', true)}
+          />
+          <TextInput
+            label="Principal"
+            value={loanPrincipal}
+            onChangeText={setLoanPrincipal}
+            keyboardType="decimal-pad"
+            accessibilityLabel={formFieldLabel('Loan principal amount', true)}
+          />
           <View style={styles.inputRow}>
-            <TextInput style={styles.input} label="Rate %" value={loanRate} onChangeText={setLoanRate} keyboardType="decimal-pad" />
-            <TextInput style={styles.input} label="Months" value={loanTenure} onChangeText={setLoanTenure} keyboardType="number-pad" />
+            <TextInput
+              style={styles.input}
+              label="Rate %"
+              value={loanRate}
+              onChangeText={setLoanRate}
+              keyboardType="decimal-pad"
+              accessibilityLabel={formFieldLabel('Annual interest rate percentage', true)}
+            />
+            <TextInput
+              style={styles.input}
+              label="Months"
+              value={loanTenure}
+              onChangeText={setLoanTenure}
+              keyboardType="number-pad"
+              accessibilityLabel={formFieldLabel('Loan tenure in months', true)}
+            />
           </View>
-          <Button mode="contained" onPress={saveLoan} disabled={status === 'saving'}>
+          <Button mode="contained" onPress={saveLoan} disabled={status === 'saving'} hitSlop={defaultHitSlop} accessibilityHint="Creates a local loan and EMI estimate">
             Add loan
           </Button>
         </Card.Content>
@@ -137,12 +202,31 @@ export function MoreScreen() {
       <Text variant="headlineSmall">Investments</Text>
       <Card mode="contained">
         <Card.Content style={styles.form}>
-          <TextInput label="Investment name" value={investmentName} onChangeText={setInvestmentName} />
+          <TextInput
+            label="Investment name"
+            value={investmentName}
+            onChangeText={setInvestmentName}
+            accessibilityLabel={formFieldLabel('Investment name', true)}
+          />
           <View style={styles.inputRow}>
-            <TextInput style={styles.input} label="Invested" value={investmentCost} onChangeText={setInvestmentCost} keyboardType="decimal-pad" />
-            <TextInput style={styles.input} label="Value" value={investmentValue} onChangeText={setInvestmentValue} keyboardType="decimal-pad" />
+            <TextInput
+              style={styles.input}
+              label="Invested"
+              value={investmentCost}
+              onChangeText={setInvestmentCost}
+              keyboardType="decimal-pad"
+              accessibilityLabel={formFieldLabel('Invested amount', true)}
+            />
+            <TextInput
+              style={styles.input}
+              label="Value"
+              value={investmentValue}
+              onChangeText={setInvestmentValue}
+              keyboardType="decimal-pad"
+              accessibilityLabel={formFieldLabel('Current investment value', true)}
+            />
           </View>
-          <Button mode="contained" onPress={saveInvestment} disabled={status === 'saving'}>
+          <Button mode="contained" onPress={saveInvestment} disabled={status === 'saving'} hitSlop={defaultHitSlop} accessibilityHint="Creates a local investment record">
             Add investment
           </Button>
         </Card.Content>
@@ -171,9 +255,59 @@ export function MoreScreen() {
       ))}
 
       <Text variant="headlineSmall">Export</Text>
-      <TextInput label="CSV transactions" value={csvExport} multiline numberOfLines={8} editable={false} />
+      <Button
+        mode="contained"
+        onPress={shareCsv}
+        disabled={transactions.length === 0}
+        hitSlop={defaultHitSlop}
+        accessibilityLabel="Share CSV export"
+      >
+        Share CSV
+      </Button>
+      <TextInput
+        label="CSV transactions"
+        value={csvExport}
+        multiline
+        numberOfLines={8}
+        editable={false}
+        accessibilityLabel="CSV transactions export preview"
+      />
 
       <ImportPanel />
+
+      <Text variant="headlineSmall">Settings</Text>
+      <Card mode="contained">
+        <Card.Content style={styles.form}>
+          <View style={styles.row}>
+            <Text variant="titleMedium">App lock</Text>
+            <Button
+              mode="contained-tonal"
+              onPress={() => dispatch(setAppLockEnabled(!appLockEnabled))}
+              hitSlop={defaultHitSlop}
+              accessibilityLabel="Toggle app lock"
+            >
+              {appLockEnabled ? 'On' : 'Off'}
+            </Button>
+          </View>
+          <TextInput
+            label="PIN"
+            value={pin}
+            onChangeText={setPin}
+            keyboardType="number-pad"
+            secureTextEntry
+            accessibilityLabel="App lock PIN"
+          />
+          <View style={styles.inputRow}>
+            <Button mode="contained" onPress={savePin} disabled={pin.length < 4} hitSlop={defaultHitSlop}>
+              Save PIN
+            </Button>
+            <Button mode="outlined" onPress={() => dispatch(lockApp())} disabled={!appLockEnabled} hitSlop={defaultHitSlop}>
+              Lock now
+            </Button>
+          </View>
+          {settingsMessage ? <Text variant="bodySmall">{settingsMessage}</Text> : null}
+        </Card.Content>
+      </Card>
       {error ? <Text style={styles.warning}>{error}</Text> : null}
     </Screen>
   );
@@ -184,7 +318,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   row: {
-    minHeight: 48,
+    minHeight: minimumTouchTarget,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

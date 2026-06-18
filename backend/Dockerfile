@@ -6,6 +6,8 @@ RUN mvn -q -DskipTests package
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+RUN addgroup -S pennycheck && adduser -S pennycheck -G pennycheck
 COPY --from=build /workspace/target/pennycheck-backend-*.jar app.jar
+USER pennycheck:pennycheck
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

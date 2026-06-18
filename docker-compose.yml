@@ -30,8 +30,14 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-pennycheck}
       JWT_ISSUER: ${JWT_ISSUER:-pennycheck-local}
       JWT_SECRET: ${JWT_SECRET:-replace-with-a-strong-development-secret}
+      AUTH_EXPOSE_DEVELOPMENT_TOKENS: ${AUTH_EXPOSE_DEVELOPMENT_TOKENS:-true}
+      APP_SECURITY_ALLOWED_ORIGINS: ${APP_SECURITY_ALLOWED_ORIGINS:-http://localhost:19006,http://localhost:8081}
+      APP_SECURITY_HSTS_ENABLED: ${APP_SECURITY_HSTS_ENABLED:-false}
     ports:
       - "8080:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
 
 volumes:
   pennycheck-postgres-data:

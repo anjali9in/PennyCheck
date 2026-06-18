@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+import { deleteSecureItem, getSecureItem, setSecureItem } from '@/services/secureStorage';
 import { AuthResponse } from './types';
 
 const accessTokenKey = 'pennycheck.accessToken';
@@ -19,23 +19,23 @@ export type StoredAuthSession = {
 
 export async function saveAuthSession(response: AuthResponse | StoredAuthSession) {
   await Promise.all([
-    SecureStore.setItemAsync(accessTokenKey, response.accessToken),
-    SecureStore.setItemAsync(refreshTokenKey, response.refreshToken),
-    SecureStore.setItemAsync(accessTokenExpiresAtKey, response.accessTokenExpiresAt),
-    SecureStore.setItemAsync(userIdKey, response.userId),
-    SecureStore.setItemAsync(deviceIdKey, response.deviceId),
-    SecureStore.setItemAsync(emailKey, response.email),
+    setSecureItem(accessTokenKey, response.accessToken),
+    setSecureItem(refreshTokenKey, response.refreshToken),
+    setSecureItem(accessTokenExpiresAtKey, response.accessTokenExpiresAt),
+    setSecureItem(userIdKey, response.userId),
+    setSecureItem(deviceIdKey, response.deviceId),
+    setSecureItem(emailKey, response.email),
   ]);
 }
 
 export async function loadAuthSession(): Promise<StoredAuthSession | null> {
   const [accessToken, refreshToken, accessTokenExpiresAt, userId, deviceId, email] = await Promise.all([
-    SecureStore.getItemAsync(accessTokenKey),
-    SecureStore.getItemAsync(refreshTokenKey),
-    SecureStore.getItemAsync(accessTokenExpiresAtKey),
-    SecureStore.getItemAsync(userIdKey),
-    SecureStore.getItemAsync(deviceIdKey),
-    SecureStore.getItemAsync(emailKey),
+    getSecureItem(accessTokenKey),
+    getSecureItem(refreshTokenKey),
+    getSecureItem(accessTokenExpiresAtKey),
+    getSecureItem(userIdKey),
+    getSecureItem(deviceIdKey),
+    getSecureItem(emailKey),
   ]);
 
   if (!accessToken || !refreshToken || !accessTokenExpiresAt || !userId || !deviceId || !email) {
@@ -47,11 +47,11 @@ export async function loadAuthSession(): Promise<StoredAuthSession | null> {
 
 export async function clearAuthSession() {
   await Promise.all([
-    SecureStore.deleteItemAsync(accessTokenKey),
-    SecureStore.deleteItemAsync(refreshTokenKey),
-    SecureStore.deleteItemAsync(accessTokenExpiresAtKey),
-    SecureStore.deleteItemAsync(userIdKey),
-    SecureStore.deleteItemAsync(deviceIdKey),
-    SecureStore.deleteItemAsync(emailKey),
+    deleteSecureItem(accessTokenKey),
+    deleteSecureItem(refreshTokenKey),
+    deleteSecureItem(accessTokenExpiresAtKey),
+    deleteSecureItem(userIdKey),
+    deleteSecureItem(deviceIdKey),
+    deleteSecureItem(emailKey),
   ]);
 }

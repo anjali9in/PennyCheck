@@ -49,3 +49,6 @@ app:
     expose-development-tokens: ${AUTH_EXPOSE_DEVELOPMENT_TOKENS:true}
     rate-limit-window-seconds: ${AUTH_RATE_LIMIT_WINDOW_SECONDS:300}
     max-auth-attempts: ${AUTH_MAX_AUTH_ATTEMPTS:10}
+  security:
+    allowed-origins: ${APP_SECURITY_ALLOWED_ORIGINS:http://localhost:19006,http://localhost:8081}
+    hsts-enabled: ${APP_SECURITY_HSTS_ENABLED:false}

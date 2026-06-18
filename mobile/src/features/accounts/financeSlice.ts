@@ -14,6 +14,7 @@ import {
   TransactionType,
 } from '@/types/domain';
 import { parseAmountToMinor } from '@/utils/money';
+import { scheduleLocalReminder } from '@/services/localNotificationService';
 import {
   createLocalAccount,
   createLocalBudget,
@@ -144,6 +145,11 @@ export const addRecurring = createAsyncThunk(
       body: `Upcoming ${recurring.name} for ${recurring.currency}`,
       scheduledAt: recurring.nextOccurrenceAt,
     });
+    await scheduleLocalReminder({
+      title: recurring.name,
+      body: `Upcoming ${recurring.name} for ${recurring.currency}`,
+      scheduledAt: recurring.nextOccurrenceAt,
+    }).catch(() => null);
     return recurring;
   },
 );

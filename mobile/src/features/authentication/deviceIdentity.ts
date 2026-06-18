@@ -1,5 +1,5 @@
-import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { getSecureItem, setSecureItem } from '@/services/secureStorage';
 import { DeviceRequest } from './types';
 
 const deviceFingerprintKey = 'pennycheck.deviceFingerprint';
@@ -9,10 +9,10 @@ function randomId() {
 }
 
 export async function getDeviceRequest(): Promise<DeviceRequest> {
-  let fingerprint = await SecureStore.getItemAsync(deviceFingerprintKey);
+  let fingerprint = await getSecureItem(deviceFingerprintKey);
   if (!fingerprint) {
     fingerprint = randomId();
-    await SecureStore.setItemAsync(deviceFingerprintKey, fingerprint);
+    await setSecureItem(deviceFingerprintKey, fingerprint);
   }
 
   return {

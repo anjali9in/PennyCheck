@@ -3,6 +3,7 @@ import * as SQLite from 'expo-sqlite';
 const databaseName = 'pennycheck.db';
 
 let databasePromise: Promise<SQLite.SQLiteDatabase> | null = null;
+let initializationPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
 export function getLocalDatabase() {
   databasePromise ??= SQLite.openDatabaseAsync(databaseName);
@@ -10,6 +11,14 @@ export function getLocalDatabase() {
 }
 
 export async function initializeLocalDatabase() {
+  if (initializationPromise) {
+    return initializationPromise;
+  }
+  initializationPromise = initializeLocalDatabaseOnce();
+  return initializationPromise;
+}
+
+async function initializeLocalDatabaseOnce() {
   const database = await getLocalDatabase();
 
   await database.execAsync(`
@@ -29,11 +38,25 @@ export async function initializeLocalDatabase() {
       operation TEXT NOT NULL,
       payload TEXT NOT NULL,
       base_version INTEGER,
+      server_version INTEGER,
       status TEXT NOT NULL DEFAULT 'pending',
+      last_error TEXT,
       retry_count INTEGER NOT NULL DEFAULT 0,
       next_retry_at TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS sync_conflicts (
+      id TEXT PRIMARY KEY NOT NULL,
+      entity_type TEXT NOT NULL,
+      entity_id TEXT NOT NULL,
+      local_payload TEXT NOT NULL,
+      remote_payload TEXT NOT NULL,
+      conflict_reason TEXT NOT NULL,
+      server_version INTEGER NOT NULL,
+      created_at TEXT NOT NULL,
+      resolved_at TEXT
     );
 
     CREATE TABLE IF NOT EXISTS accounts (
@@ -178,6 +201,8 @@ export async function initializeLocalDatabase() {
   `);
 
   await ensureColumn(database, 'transactions', 'reference_number', 'TEXT');
+  await ensureColumn(database, 'sync_queue', 'server_version', 'INTEGER');
+  await ensureColumn(database, 'sync_queue', 'last_error', 'TEXT');
 
   await seedDefaultCategories(database);
 
